@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, UploadCloud, Play, FileText, Image as ImageIcon, Loader2, Info } from "lucide-react";
+import { Download, UploadCloud, Play, FileText, Image as ImageIcon, Loader2, Info, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { exportZip } from '@/utils/exportZip';
 import { exportPdf } from '@/utils/exportPdf';
@@ -57,12 +57,43 @@ export default function BenchmarkDashboard() {
   const [images, setImages] = useState({ source: null as string | null, target: null as string | null });
   const [files, setFiles] = useState({ source: null as File | null, target: null as File | null });
 
+  useEffect(() => {
+    if (useCase === 'head-swap') {
+      setPrompt(`Replace the entire head of the target person with the head from the source image.
+
+Requirements:
+- Transfer the complete head including hairstyle, hairline, ears, facial features, beard, and neck transitions.
+- Preserve all details exactly.
+- Match perspective and lighting.
+- Ensure seamless integration with the target body.
+- Avoid any visible cut lines or blending artifacts.
+- Generate a realistic result.`);
+    } else if (useCase === 'try-on') {
+      setPrompt(`Replace the person's complete outfit with the uploaded garments.
+
+Requirements:
+- Keep the person's identity unchanged.
+- Preserve face, hair, skin tone, body proportions, hands, and feet.
+- Maintain original pose and camera angle.
+- Ensure realistic garment draping and fabric behavior.
+- Preserve all garment details accurately.
+- Produce a studio-quality photorealistic image.`);
+    }
+  }, [useCase]);
+
   const handleImageUpload = (e: any, type: 'source' | 'target') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImages(prev => ({ ...prev, [type]: URL.createObjectURL(file) }));
       setFiles(prev => ({ ...prev, [type]: file }));
     }
+  };
+
+  const handleRemoveImage = (type: 'source' | 'target', e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setImages(prev => ({ ...prev, [type]: null }));
+    setFiles(prev => ({ ...prev, [type]: null }));
   };
 
   const targetConfigs = selectedModel === 'all' 
@@ -202,7 +233,7 @@ export default function BenchmarkDashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1024x1024">1024 x 1024</SelectItem>
-                      <SelectItem value="1536x1024">1536 x 1024</SelectItem>
+                      <SelectItem value="1024x1792">1024 x 1792</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -228,8 +259,11 @@ export default function BenchmarkDashboard() {
                     <div className="border-2 border-dashed border-neutral-200 rounded-lg p-4 hover:bg-neutral-50 transition-colors text-center cursor-pointer relative">
                       <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleImageUpload(e, 'source')} accept="image/*" />
                       {images.source ? (
-                        <div className="relative h-24 w-full rounded-md overflow-hidden bg-black/5">
+                        <div className="relative h-24 w-full rounded-md overflow-hidden bg-black/5 border border-neutral-200">
                            <img src={images.source} alt="Source" className="object-contain w-full h-full" />
+                           <button onClick={(e) => handleRemoveImage('source', e)} className="absolute top-1 right-1 bg-white/80 p-1.5 rounded-full text-neutral-600 hover:bg-white hover:text-red-500 shadow-sm transition-all">
+                             <X className="w-3 h-3" />
+                           </button>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-2 text-neutral-400">
@@ -245,8 +279,11 @@ export default function BenchmarkDashboard() {
                     <div className="border-2 border-dashed border-neutral-200 rounded-lg p-4 hover:bg-neutral-50 transition-colors text-center cursor-pointer relative">
                       <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleImageUpload(e, 'target')} accept="image/*" />
                       {images.target ? (
-                        <div className="relative h-24 w-full rounded-md overflow-hidden bg-black/5">
+                        <div className="relative h-24 w-full rounded-md overflow-hidden bg-black/5 border border-neutral-200">
                            <img src={images.target} alt="Target" className="object-contain w-full h-full" />
+                           <button onClick={(e) => handleRemoveImage('target', e)} className="absolute top-1 right-1 bg-white/80 p-1.5 rounded-full text-neutral-600 hover:bg-white hover:text-red-500 shadow-sm transition-all">
+                             <X className="w-3 h-3" />
+                           </button>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-2 text-neutral-400">
@@ -398,10 +435,10 @@ export default function BenchmarkDashboard() {
                         </CardContent>
                         <CardFooter className="p-4 pt-2 flex gap-2 border-t border-neutral-100 mt-2 bg-neutral-50/50">
                           <Button variant="outline" size="sm" className="w-full text-xs h-8 bg-white">
-                            <Info className="w-2 h-2 mr-1" /> Metadata
+                            <Info className="w-1 h-2 mr-1" /> Metadata
                           </Button>
                           <Button variant="outline" size="sm" className="w-full text-xs h-8 bg-white">
-                            <Download className="w-2 h-2 mr-1" /> Download
+                            <Download className="w-1 h-2 mr-1" /> Download
                           </Button>
                         </CardFooter>
                       </Card>
@@ -433,7 +470,7 @@ export default function BenchmarkDashboard() {
                             {[...results].sort((a, b) => a.costUSD - b.costUSD)[0]?.modelName}
                           </div>
                           <div className="text-sm text-emerald-600 mt-1">
-                            ${[...results].sort((a, b) => a.costUSD - b.costUSD)[0]?.costUSD}
+                            ${[...results].sort((a, b) => a.costUSD - b.costUSD)[0]?.costUSD} <span className="text-neutral-400">/ ₹{[...results].sort((a, b) => a.costUSD - b.costUSD)[0]?.costINR}</span>
                           </div>
                         </CardContent>
                       </Card>
@@ -472,7 +509,7 @@ export default function BenchmarkDashboard() {
 
                     <Card className="shadow-sm border-neutral-200">
                       <CardHeader>
-                        <CardTitle className="text-base">Cost Comparison (USD)</CardTitle>
+                        <CardTitle className="text-base">Cost Comparison (USD & INR)</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="h-[250px] w-full">
@@ -482,7 +519,9 @@ export default function BenchmarkDashboard() {
                               <XAxis dataKey="modelName" axisLine={false} tickLine={false} tick={{fontSize: 12}} />
                               <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} />
                               <RechartsTooltip cursor={{fill: '#f9fafb'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                              <Bar dataKey="costUSD" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} />
+                              <Legend wrapperStyle={{fontSize: '12px'}} />
+                              <Bar dataKey="costUSD" name="Cost (USD)" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
+                              <Bar dataKey="costINR" name="Cost (INR)" fill="#34d399" radius={[4, 4, 0, 0]} barSize={30} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>

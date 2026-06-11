@@ -29,19 +29,19 @@ export async function POST(req: Request) {
     if (configId === 'gpt-img-2-low') {
       model = 'gpt-image-2';
       quality = 'low';
-      estimatedCostUSD = size === '1792x1024' ? 0.010 : 0.005;
+      estimatedCostUSD = size === '1024x1792' ? 0.010 : 0.005;
     } else if (configId === 'gpt-img-2-med') {
       model = 'gpt-image-2';
       quality = 'medium';
-      estimatedCostUSD = size === '1792x1024' ? 0.080 : 0.040;
+      estimatedCostUSD = size === '1024x1792' ? 0.080 : 0.040;
     } else if (configId === 'gpt-img-1-mini-med') {
       model = 'gpt-image-1-mini';
       quality = 'medium';
-      estimatedCostUSD = size === '1792x1024' ? 0.030 : 0.020;
+      estimatedCostUSD = size === '1024x1792' ? 0.030 : 0.020;
     } else if (configId === 'gpt-img-1-mini-high') {
       model = 'gpt-image-1-mini';
       quality = 'high';
-      estimatedCostUSD = size === '1792x1024' ? 0.050 : 0.040;
+      estimatedCostUSD = size === '1024x1792' ? 0.050 : 0.040;
     }
 
     const startTime = performance.now();
