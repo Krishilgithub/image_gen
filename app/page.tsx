@@ -17,7 +17,16 @@ import { exportZip } from '@/utils/exportZip';
 import { exportPdf } from '@/utils/exportPdf';
 
 type GenerationStatus = "idle" | "generating" | "completed" | "failed";
-type UseCase = "head-swap" | "try-on";
+type UseCase = 
+  | "head-swap" 
+  | "try-on" 
+  | "hairstyle-transfer" 
+  | "background-replacement"
+  | "ai-product-photography"
+  | "linkedin-headshot"
+  | "ai-avatar"
+  | "age-transformation"
+  | "multi-person-face-swap";
 
 interface ModelConfig {
   id: string;
@@ -58,8 +67,9 @@ export default function BenchmarkDashboard() {
   const [files, setFiles] = useState({ source: null as File | null, target: null as File | null });
 
   useEffect(() => {
-    if (useCase === 'head-swap') {
-      setPrompt(`Replace the entire head of the target person with the head from the source image.
+    switch (useCase) {
+      case 'head-swap':
+        setPrompt(`Replace the entire head of the target person with the head from the source image.
 
 Requirements:
 - Transfer the complete head including hairstyle, hairline, ears, facial features, beard, and neck transitions.
@@ -68,8 +78,9 @@ Requirements:
 - Ensure seamless integration with the target body.
 - Avoid any visible cut lines or blending artifacts.
 - Generate a realistic result.`);
-    } else if (useCase === 'try-on') {
-      setPrompt(`Replace the person's complete outfit with the uploaded garments.
+        break;
+      case 'try-on':
+        setPrompt(`Replace the person's complete outfit with the uploaded garments.
 
 Requirements:
 - Keep the person's identity unchanged.
@@ -78,8 +89,101 @@ Requirements:
 - Ensure realistic garment draping and fabric behavior.
 - Preserve all garment details accurately.
 - Produce a studio-quality photorealistic image.`);
+        break;
+      case 'hairstyle-transfer':
+        setPrompt(`Transfer the hairstyle from the reference image onto the target person.
+
+Requirements:
+- Preserve the target person's face and identity exactly.
+- Replace only the hairstyle.
+- Maintain realistic hair strands, volume, texture, and lighting.
+- Ensure natural blending with the forehead and side profile.
+- Produce a photorealistic result.`);
+        break;
+      case 'background-replacement':
+        setPrompt(`Replace the background with a modern professional office environment.
+
+Requirements:
+- Preserve the person exactly.
+- Maintain realistic depth of field.
+- Match lighting and shadows.
+- Ensure natural edge blending around hair and clothing.
+- Generate a professional studio-quality image.`);
+        break;
+      case 'ai-product-photography':
+        setPrompt(`Place the uploaded product on a premium studio setup.
+
+For e-commerce.
+
+Requirements:
+- Preserve the product exactly.
+- Do not modify dimensions, logos, colors, labels, or branding.
+- Create realistic shadows and reflections.
+- Use professional advertising-style lighting.
+- Produce an e-commerce ready image.`);
+        break;
+      case 'linkedin-headshot':
+        setPrompt(`Transform this photo into a professional LinkedIn headshot.
+
+Requirements:
+- Preserve the exact identity and facial features.
+- Replace clothing with a well-fitted navy business suit.
+- Use professional studio lighting.
+- Add a clean blurred office background.
+- Maintain realistic skin texture.
+- Generate a premium corporate portrait.`);
+        break;
+      case 'ai-avatar':
+        setPrompt(`Create a premium digital avatar from the uploaded photo.
+
+Requirements:
+- Preserve identity and facial structure.
+- Maintain recognizable facial features.
+- Enhance lighting and styling.
+- Produce a polished modern avatar suitable for professional profiles.
+- Keep the result realistic rather than cartoonish.`);
+        break;
+      case 'age-transformation':
+        setPrompt(`Generate a realistic version of the same person 20 years older.
+
+Requirements:
+- Preserve identity.
+- Add natural aging effects including wrinkles, skin texture changes, and hair aging.
+- Maintain realism and facial structure consistency.
+- Avoid exaggerated aging artifacts.`);
+        break;
+      case 'multi-person-face-swap':
+        setPrompt(`Swap all faces in the target image with the corresponding faces from the source image.
+
+Requirements:
+- Preserve each source identity accurately.
+- Match pose, expression, and lighting.
+- Maintain photorealism.
+- Avoid mixing identities or introducing artifacts.`);
+        break;
     }
   }, [useCase]);
+
+  const getSourceLabel = (u: UseCase) => {
+    switch (u) {
+      case 'head-swap': return 'Source Head Image';
+      case 'try-on': return 'Person Image';
+      case 'hairstyle-transfer': return 'Reference Hairstyle Image';
+      case 'multi-person-face-swap': return 'Source Faces Image';
+      case 'ai-product-photography': return 'Product Image';
+      default: return 'Primary Image';
+    }
+  };
+
+  const getTargetLabel = (u: UseCase) => {
+    switch (u) {
+      case 'head-swap': return 'Target Body Image';
+      case 'try-on': return 'Garment Image';
+      case 'hairstyle-transfer': return 'Target Person Image';
+      case 'multi-person-face-swap': return 'Target Scene Image';
+      default: return 'Secondary Image (Optional)';
+    }
+  };
 
   const handleImageUpload = (e: any, type: 'source' | 'target') => {
     if (e.target.files && e.target.files[0]) {
@@ -221,6 +325,13 @@ Requirements:
                     <SelectContent>
                       <SelectItem value="head-swap">Head Swap</SelectItem>
                       <SelectItem value="try-on">Virtual Try-On</SelectItem>
+                      <SelectItem value="hairstyle-transfer">Hairstyle Transfer</SelectItem>
+                      <SelectItem value="background-replacement">Background Replacement</SelectItem>
+                      <SelectItem value="ai-product-photography">AI Product Photography</SelectItem>
+                      <SelectItem value="linkedin-headshot">Professional LinkedIn Headshot</SelectItem>
+                      <SelectItem value="ai-avatar">AI Avatar Creation</SelectItem>
+                      <SelectItem value="age-transformation">Age Transformation</SelectItem>
+                      <SelectItem value="multi-person-face-swap">Multi-Person Face Swap</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -255,7 +366,7 @@ Requirements:
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>{useCase === 'head-swap' ? 'Source Head Image' : 'Person Image'}</Label>
+                    <Label>{getSourceLabel(useCase)}</Label>
                     <div className="border-2 border-dashed border-neutral-200 rounded-lg p-4 hover:bg-neutral-50 transition-colors text-center cursor-pointer relative">
                       <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleImageUpload(e, 'source')} accept="image/*" />
                       {images.source ? (
@@ -275,7 +386,7 @@ Requirements:
                   </div>
 
                   <div className="space-y-2">
-                    <Label>{useCase === 'head-swap' ? 'Target Body Image' : 'Garment Image'}</Label>
+                    <Label>{getTargetLabel(useCase)}</Label>
                     <div className="border-2 border-dashed border-neutral-200 rounded-lg p-4 hover:bg-neutral-50 transition-colors text-center cursor-pointer relative">
                       <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleImageUpload(e, 'target')} accept="image/*" />
                       {images.target ? (
